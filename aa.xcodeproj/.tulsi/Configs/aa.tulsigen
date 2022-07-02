@@ -1,0 +1,27 @@
+{
+  "additionalFilePaths" : [
+    "/BUILD"
+  ],
+  "buildTargets" : [
+    "//:UrlGetClasses",
+    "//:ddx",
+    "//:sd"
+  ],
+  "optionSet" : {
+
+  },
+  "projectName" : "aa",
+  "sourceFilters" : [
+    "UrlGet",
+    "Vendor",
+    "Vendor/SDWebImage",
+    "Vendor/SDWebImage/SDWebImage",
+    "Vendor/SDWebImage/SDWebImage/Core",
+    "Vendor/SDWebImage/SDWebImage/Private",
+    "Vendor/SDWebImage/SDWebImageMapKit",
+    "Vendor/SDWebImage/SDWebImageMapKit/MapKit",
+    "Vendor/SDWebImage/WebImage",
+    "Vendor/rules_pods",
+    "Vendor/rules_pods/BazelExtensions"
+  ]
+}

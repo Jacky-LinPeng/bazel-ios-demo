@@ -1,0 +1,407 @@
+
+load(
+  "//Vendor/rules_pods/BazelExtensions:extensions.bzl",
+  "acknowledged_target",
+  "gen_module_map",
+  "gen_includes",
+  "headermap",
+  "umbrella_header"
+)
+# Add a config setting release for compilation mode
+# Assume that people are using `opt` for release mode
+# see the bazel user manual for more information
+# https://docs.bazel.build/versions/master/be/general.html#config_setting
+config_setting(
+  name = "release",
+  values = {
+    "compilation_mode": "opt"
+  }
+)
+config_setting(
+  name = "osxCase",
+  values = {
+    "apple_platform_type": "macos"
+  }
+)
+config_setting(
+  name = "tvosCase",
+  values = {
+    "apple_platform_type": "tvos"
+  }
+)
+config_setting(
+  name = "watchosCase",
+  values = {
+    "apple_platform_type": "watchos"
+  }
+)
+filegroup(
+  name = "SDWebImage_package_hdrs",
+  srcs = [
+    "SDWebImage_direct_hdrs",
+    "Core_direct_hdrs",
+    "MapKit_direct_hdrs"
+  ],
+  visibility = [
+    "//visibility:public"
+  ]
+)
+filegroup(
+  name = "SDWebImage_direct_hdrs",
+  srcs = glob(
+    [
+      "pod_support/Headers/Public/**/*"
+    ]
+  ),
+  visibility = [
+    "//visibility:public"
+  ]
+)
+filegroup(
+  name = "SDWebImage_public_hdrs",
+  srcs = [
+    ":Core_public_hdrs"
+  ],
+  visibility = [
+    "//visibility:public"
+  ]
+)
+filegroup(
+  name = "SDWebImage_hdrs",
+  srcs = glob(
+    [
+      "pod_support/Headers/Public/**/*"
+    ]
+  ) + [
+    ":Core_hdrs"
+  ],
+  visibility = [
+    "//visibility:public"
+  ]
+)
+headermap(
+  name = "SDWebImage_hmap",
+  namespace = "SDWebImage",
+  hdrs = [
+    "SDWebImage_package_hdrs",
+    ":SDWebImage_hdrs"
+  ],
+  deps = [
+    ":Core_hmap"
+  ],
+  visibility = [
+    "//visibility:public"
+  ]
+)
+objc_library(
+  name = "SDWebImage",
+  enable_modules = 1,
+  hdrs = [
+    ":SDWebImage_hdrs",
+    ":SDWebImage_hmap"
+  ],
+  pch = "pod_support/Headers/Private/SDWebImage-prefix.pch",
+  sdk_frameworks = [
+    "ImageIO"
+  ],
+  deps = [
+    ":Core",
+    ":SDWebImage_hmap"
+  ],
+  copts = [
+    "-fobjc-weak",
+    "-Wno-everything",
+    "-Wnon-modular-include-in-framework-module",
+    "-g",
+    "-stdlib=libc++",
+    "-DCOCOAPODS=1",
+    "-DOBJC_OLD_DISPATCH_PROTOTYPES=0",
+    "-fdiagnostics-show-note-include-stack",
+    "-fno-common",
+    "-fembed-bitcode-marker",
+    "-fmessage-length=0",
+    "-fpascal-strings",
+    "-fstrict-aliasing",
+    "-Wno-error=nonportable-include-path"
+  ] + select(
+    {
+      "//conditions:default": [
+        "-DDEBUG=1",
+        "-DPOD_CONFIGURATION_DEBUG=1"
+      ],
+      ":release": [
+        "-DPOD_CONFIGURATION_RELEASE=1",
+        "-DNS_BLOCK_ASSERTIONS=1"
+      ]
+    }
+  ) + [
+    "-I$(GENDIR)/Vendor/SDWebImage/SDWebImage_hmap.hmap",
+    "-I."
+  ] + [
+    "-fmodule-name=SDWebImage",
+    "-fmodules"
+  ],
+  visibility = [
+    "//visibility:public"
+  ]
+)
+acknowledged_target(
+  name = "SDWebImage_acknowledgement",
+  deps = [],
+  value = "//Vendor/SDWebImage/pod_support_buildable:acknowledgement_fragment"
+)
+filegroup(
+  name = "Core_direct_hdrs",
+  srcs = glob(
+    [
+      "pod_support/Headers/Public/**/*",
+      "SDWebImage/Core/*.h",
+      "SDWebImage/Private/*.h",
+      "WebImage/SDWebImage.h"
+    ]
+  ),
+  visibility = [
+    "//visibility:public"
+  ]
+)
+filegroup(
+  name = "Core_public_hdrs",
+  srcs = glob(
+    [
+      "SDWebImage/Core/*.h",
+      "SDWebImage/Private/*.h",
+      "WebImage/SDWebImage.h"
+    ],
+    exclude = [
+      "SDWebImage/Private/*.h"
+    ]
+  ),
+  visibility = [
+    "//visibility:public"
+  ]
+)
+filegroup(
+  name = "Core_hdrs",
+  srcs = glob(
+    [
+      "pod_support/Headers/Public/**/*",
+      "SDWebImage/Core/*.h",
+      "SDWebImage/Private/*.h",
+      "WebImage/SDWebImage.h"
+    ]
+  ),
+  visibility = [
+    "//visibility:public"
+  ]
+)
+filegroup(
+  name = "Core_union_hdrs",
+  srcs = [
+    "Core_hdrs",
+    "SDWebImage_hdrs"
+  ],
+  visibility = [
+    "//visibility:public"
+  ]
+)
+headermap(
+  name = "Core_hmap",
+  namespace = "SDWebImage",
+  hdrs = [
+    "SDWebImage_package_hdrs",
+    ":Core_union_hdrs"
+  ],
+  deps = [],
+  visibility = [
+    "//visibility:public"
+  ]
+)
+objc_library(
+  name = "Core",
+  enable_modules = 1,
+  srcs = glob(
+    [
+      "SDWebImage/Core/*.m",
+      "SDWebImage/Private/*.m"
+    ],
+    exclude = [
+      "SDWebImageMapKit/MapKit/*.m"
+    ]
+  ),
+  hdrs = [
+    ":Core_hdrs",
+    ":Core_hmap"
+  ],
+  pch = "pod_support/Headers/Private/SDWebImage-prefix.pch",
+  sdk_frameworks = [
+    "ImageIO"
+  ],
+  deps = [
+    ":Core_hmap"
+  ],
+  copts = [
+    "-fobjc-weak",
+    "-Wno-everything",
+    "-Wnon-modular-include-in-framework-module",
+    "-g",
+    "-stdlib=libc++",
+    "-DCOCOAPODS=1",
+    "-DOBJC_OLD_DISPATCH_PROTOTYPES=0",
+    "-fdiagnostics-show-note-include-stack",
+    "-fno-common",
+    "-fembed-bitcode-marker",
+    "-fmessage-length=0",
+    "-fpascal-strings",
+    "-fstrict-aliasing",
+    "-Wno-error=nonportable-include-path"
+  ] + select(
+    {
+      "//conditions:default": [
+        "-DDEBUG=1",
+        "-DPOD_CONFIGURATION_DEBUG=1"
+      ],
+      ":release": [
+        "-DPOD_CONFIGURATION_RELEASE=1",
+        "-DNS_BLOCK_ASSERTIONS=1"
+      ]
+    }
+  ) + [
+    "-I$(GENDIR)/Vendor/SDWebImage/Core_hmap.hmap",
+    "-I."
+  ] + [
+    "-fmodule-name=SDWebImage",
+    "-fmodules"
+  ],
+  visibility = [
+    "//visibility:public"
+  ]
+)
+acknowledged_target(
+  name = "Core_acknowledgement",
+  deps = [],
+  value = "//Vendor/SDWebImage/pod_support_buildable:acknowledgement_fragment"
+)
+filegroup(
+  name = "MapKit_direct_hdrs",
+  srcs = glob(
+    [
+      "pod_support/Headers/Public/**/*",
+      "SDWebImageMapKit/MapKit/*.h"
+    ]
+  ),
+  visibility = [
+    "//visibility:public"
+  ]
+)
+filegroup(
+  name = "MapKit_public_hdrs",
+  srcs = glob(
+    [
+      "SDWebImageMapKit/MapKit/*.h"
+    ]
+  ) + [
+    ":Core_public_hdrs"
+  ],
+  visibility = [
+    "//visibility:public"
+  ]
+)
+filegroup(
+  name = "MapKit_hdrs",
+  srcs = glob(
+    [
+      "pod_support/Headers/Public/**/*",
+      "SDWebImageMapKit/MapKit/*.h"
+    ]
+  ),
+  visibility = [
+    "//visibility:public"
+  ]
+)
+filegroup(
+  name = "MapKit_union_hdrs",
+  srcs = [
+    "MapKit_hdrs",
+    "SDWebImage_hdrs",
+    ":Core_hdrs"
+  ],
+  visibility = [
+    "//visibility:public"
+  ]
+)
+headermap(
+  name = "MapKit_hmap",
+  namespace = "SDWebImage",
+  hdrs = [
+    "SDWebImage_package_hdrs",
+    ":MapKit_union_hdrs"
+  ],
+  deps = [
+    ":Core_hmap"
+  ],
+  visibility = [
+    "//visibility:public"
+  ]
+)
+objc_library(
+  name = "MapKit",
+  enable_modules = 1,
+  srcs = glob(
+    [
+      "SDWebImageMapKit/MapKit/*.m"
+    ]
+  ),
+  hdrs = [
+    ":MapKit_hdrs",
+    ":MapKit_hmap"
+  ],
+  pch = "pod_support/Headers/Private/SDWebImage-prefix.pch",
+  sdk_frameworks = [
+    "MapKit"
+  ],
+  deps = [
+    ":Core",
+    ":MapKit_hmap"
+  ],
+  copts = [
+    "-fobjc-weak",
+    "-Wno-everything",
+    "-Wnon-modular-include-in-framework-module",
+    "-g",
+    "-stdlib=libc++",
+    "-DCOCOAPODS=1",
+    "-DOBJC_OLD_DISPATCH_PROTOTYPES=0",
+    "-fdiagnostics-show-note-include-stack",
+    "-fno-common",
+    "-fembed-bitcode-marker",
+    "-fmessage-length=0",
+    "-fpascal-strings",
+    "-fstrict-aliasing",
+    "-Wno-error=nonportable-include-path"
+  ] + select(
+    {
+      "//conditions:default": [
+        "-DDEBUG=1",
+        "-DPOD_CONFIGURATION_DEBUG=1"
+      ],
+      ":release": [
+        "-DPOD_CONFIGURATION_RELEASE=1",
+        "-DNS_BLOCK_ASSERTIONS=1"
+      ]
+    }
+  ) + [
+    "-I$(GENDIR)/Vendor/SDWebImage/MapKit_hmap.hmap",
+    "-I."
+  ] + [
+    "-fmodule-name=SDWebImage",
+    "-fmodules"
+  ],
+  visibility = [
+    "//visibility:public"
+  ]
+)
+acknowledged_target(
+  name = "MapKit_acknowledgement",
+  deps = [],
+  value = "//Vendor/SDWebImage/pod_support_buildable:acknowledgement_fragment"
+)
